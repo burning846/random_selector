@@ -8,6 +8,20 @@ class DecisionMaker {
         this.init();
     }
 
+    // Google Analytics 事件跟踪
+    trackEvent(action, category = 'User Interaction', label = '', value = null) {
+        if (typeof gtag !== 'undefined') {
+            const eventData = {
+                event_category: category,
+                event_label: label
+            };
+            if (value !== null) {
+                eventData.value = value;
+            }
+            gtag('event', action, eventData);
+        }
+    }
+
     init() {
         this.checkAuthStatus();
         this.bindEvents();
@@ -106,6 +120,9 @@ class DecisionMaker {
             this.saveUserInfo();
             this.checkAuthStatus();
             this.showMessage('Google登录成功！', 'success');
+            
+            // 跟踪登录事件
+            this.trackEvent('login', 'Authentication', 'google_login');
         }, 1000);
     }
 
@@ -118,6 +135,9 @@ class DecisionMaker {
         this.saveUserInfo();
         this.checkAuthStatus();
         this.showMessage('以游客模式登录成功！', 'success');
+        
+        // 跟踪登录事件
+        this.trackEvent('login', 'Authentication', 'guest_login');
     }
 
     handleLogout() {
@@ -126,6 +146,9 @@ class DecisionMaker {
             localStorage.removeItem('user_info');
             this.checkAuthStatus();
             this.showMessage('已退出登录', 'info');
+            
+            // 跟踪登出事件
+            this.trackEvent('logout', 'Authentication', 'user_logout');
         }
     }
 
@@ -174,14 +197,23 @@ class DecisionMaker {
         this.updateOptionsDisplay();
         this.updateWheelColors();
         this.showMessage(`选项"${text}"添加成功！`, 'success');
+        
+        // 跟踪添加选项事件
+        this.trackEvent('add_option', 'Decision Making', text, this.options.length);
     }
 
     removeOption(id) {
+        const removedOption = this.options.find(option => option.id === id);
         this.options = this.options.filter(option => option.id !== id);
         this.saveOptions();
         this.updateOptionsDisplay();
         this.updateWheelColors();
         this.showMessage('选项已删除！', 'info');
+        
+        // 跟踪删除选项事件
+        if (removedOption) {
+            this.trackEvent('remove_option', 'Decision Making', removedOption.text, this.options.length);
+        }
     }
 
     updateOptionsDisplay() {
@@ -248,6 +280,9 @@ class DecisionMaker {
         result.classList.remove('show', 'winner');
         result.textContent = '';
         
+        // 跟踪转盘旋转事件
+        this.trackEvent('spin_wheel', 'Decision Making', '', this.options.length);
+        
         // 计算随机角度
         const randomIndex = Math.floor(Math.random() * this.options.length);
         const anglePerOption = 360 / this.options.length;
@@ -272,6 +307,9 @@ class DecisionMaker {
             
             // 记录选择历史
             this.recordChoice(selectedOption);
+            
+            // 跟踪结果事件
+            this.trackEvent('spin_result', 'Decision Making', selectedOption.text);
         }, 3000);
     }
 
@@ -367,11 +405,15 @@ class DecisionMaker {
     // 清空所有选项
     clearAllOptions() {
         if (confirm('确定要清空所有选项吗？此操作不可撤销！')) {
+            const optionCount = this.options.length;
             this.options = [];
             this.saveOptions();
             this.updateOptionsDisplay();
             this.updateWheelColors();
             this.showMessage('所有选项已清空！', 'info');
+            
+            // 跟踪清空选项事件
+            this.trackEvent('clear_options', 'Decision Making', '', optionCount);
         }
     }
 
@@ -388,11 +430,15 @@ class DecisionMaker {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `decision-options-${new Date().toISOString().split('T')[0]}.json`;
+        const fileName = `decision-options-${new Date().toISOString().split('T')[0]}.json`;
+        a.download = fileName;
         a.click();
         URL.revokeObjectURL(url);
         
         this.showMessage('选项数据导出成功！', 'success');
+        
+        // 跟踪导出选项事件
+        this.trackEvent('export_options', 'Data Management', fileName, this.options.length);
     }
 }
 
@@ -402,6 +448,15 @@ let decisionMaker;
 // 页面加载完成后初始化
 document.addEventListener('DOMContentLoaded', () => {
     decisionMaker = new DecisionMaker();
+    
+    // 跟踪页面浏览事件
+    if (typeof gtag !== 'undefined') {
+        gtag('event', 'page_view', {
+            page_title: document.title,
+            page_location: window.location.href,
+            page_path: window.location.pathname
+        });
+    }
     
     // 添加键盘快捷键
     document.addEventListener('keydown', (e) => {

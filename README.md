@@ -54,6 +54,7 @@ web_test/
 ├── style.css           # 样式文件
 ├── script.js           # JavaScript逻辑
 ├── vercel.json         # Vercel配置
+├── analytics-setup.md  # Analytics 设置指南
 └── README.md           # 项目说明
 ```
 
@@ -63,6 +64,8 @@ web_test/
 - **样式**: CSS Grid, Flexbox, CSS动画
 - **存储**: LocalStorage
 - **部署**: Vercel
+- **认证**: Google OAuth 2.0 (模拟)
+- **分析**: Google Analytics 4 (GA4)
 
 ## 浏览器支持
 
@@ -86,6 +89,25 @@ web_test/
 3. 启用Google+ API
 4. 创建OAuth 2.0客户端ID
 5. 在 `script.js` 中替换相应的客户端ID
+
+### Google Analytics 配置
+
+如需启用网站数据分析：
+
+1. 前往 [Google Analytics](https://analytics.google.com/)
+2. 创建新的 GA4 属性
+3. 获取测量 ID（格式：G-XXXXXXXXXX）
+4. 将 `index.html` 中的 `GA_MEASUREMENT_ID` 替换为实际 ID
+5. 详细设置请参考 `analytics-setup.md`
+
+### 跟踪的用户行为
+
+应用自动跟踪以下事件：
+- 用户登录/登出
+- 添加/删除选项
+- 转盘旋转和结果
+- 数据导出和清空
+- 页面浏览
 
 ## 许可证
 
