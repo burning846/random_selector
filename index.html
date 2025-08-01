@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>随机决策器 - 让选择变得简单</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <meta name="google-signin-client_id" content="YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com">
+</head>
+<body>
+    <!-- 登录模态框 -->
+    <div id="loginModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>欢迎使用随机决策器</h2>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <p>选择您的登录方式</p>
+                <div class="login-options">
+                    <button id="googleLoginBtn" class="login-btn google-btn">
+                        <svg class="google-icon" viewBox="0 0 24 24">
+                            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                        </svg>
+                        使用 Google 登录
+                    </button>
+                    <button id="guestLoginBtn" class="login-btn guest-btn">
+                        <span class="guest-icon">👤</span>
+                        游客模式
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 主应用界面 -->
+    <div id="app" class="app-container" style="display: none;">
+        <!-- 用户信息栏 -->
+        <div class="user-bar">
+            <div class="user-info">
+                <img id="userAvatar" src="" alt="用户头像" class="user-avatar" style="display: none;">
+                <span id="userName">游客用户</span>
+            </div>
+            <button id="logoutBtn" class="logout-btn">退出登录</button>
+        </div>
+
+        <!-- 主要内容 -->
+        <div class="main-container">
+            <header class="app-header">
+                <h1>🎲 随机决策器</h1>
+                <p class="subtitle">让选择变得简单有趣</p>
+            </header>
+
+            <main class="decision-maker">
+                <!-- 选项输入区域 -->
+                <section class="input-section">
+                    <h2>添加选项</h2>
+                    <div class="option-input">
+                        <input type="text" id="optionInput" placeholder="输入一个选项，例如：麻辣烫">
+                        <button id="addOptionBtn">添加</button>
+                    </div>
+                    <div class="quick-options">
+                        <h3>快速添加：今天吃什么？</h3>
+                        <div class="quick-buttons">
+                            <button class="quick-btn" data-option="麻辣烫">麻辣烫</button>
+                            <button class="quick-btn" data-option="火锅">火锅</button>
+                            <button class="quick-btn" data-option="寿司">寿司</button>
+                            <button class="quick-btn" data-option="汉堡">汉堡</button>
+                            <button class="quick-btn" data-option="面条">面条</button>
+                            <button class="quick-btn" data-option="披萨">披萨</button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 选项列表 -->
+                <section class="options-section">
+                    <h2>当前选项 <span id="optionCount">(0)</span></h2>
+                    <div id="optionsList" class="options-list"></div>
+                </section>
+
+                <!-- 决策区域 -->
+                <section class="decision-section">
+                    <div class="decision-wheel">
+                        <div id="wheel" class="wheel">
+                            <div class="wheel-center">
+                                <div class="wheel-pointer">▼</div>
+                            </div>
+                        </div>
+                    </div>
+                    <button id="spinBtn" class="spin-btn" disabled>
+                        <span class="btn-text">开始选择</span>
+                        <span class="btn-icon">🎯</span>
+                    </button>
+                    <div id="result" class="result"></div>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
