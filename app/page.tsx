@@ -82,7 +82,7 @@ export default function RandomSelector() {
   const [result, setResult] = useState('')
   const [isSpinning, setIsSpinning] = useState(false)
   const [history, setHistory] = useState<HistoryItem[]>([])
-  const [rotation, setRotation] = useState(0)
+  const [wheelRotation, setWheelRotation] = useState(0)
   const [showGroupModal, setShowGroupModal] = useState(false)
   const [editingGroup, setEditingGroup] = useState<OptionGroup | null>(null)
 
@@ -192,6 +192,24 @@ export default function RandomSelector() {
     }
   }
 
+  const loadPresetTemplate = (templateId: string) => {
+    const template = PRESET_GROUPS.find(group => group.id === templateId)
+    if (template) {
+      // 创建新的选项组，使用模板的选项
+      const newGroup: OptionGroup = {
+        id: Date.now().toString(),
+        name: template.name,
+        options: template.options.map(option => ({
+          ...option,
+          id: Date.now().toString() + Math.random().toString(36).substr(2, 9)
+        }))
+      }
+      setOptionGroups([...optionGroups, newGroup])
+      setSelectedGroupId(newGroup.id)
+      showMessage(`已加载模板：${template.name}`, 'success')
+    }
+  }
+
   const spinWheel = () => {
     if (currentOptions.length === 0) {
       showMessage('请先添加一些选项！', 'error')
@@ -201,16 +219,37 @@ export default function RandomSelector() {
     setIsSpinning(true)
     setResult('')
 
-    // 随机旋转角度
-    const spins = Math.floor(Math.random() * 5) + 5 // 5-10圈
-    const finalAngle = Math.random() * 360
-    const totalRotation = rotation + spins * 360 + finalAngle
+    // 先随机选择一个选项
+    const randomIndex = Math.floor(Math.random() * currentOptions.length)
+    const selectedOption = currentOptions[randomIndex]
     
-    setRotation(totalRotation)
+    // 计算该选项在转盘上的角度
+    const anglePerOption = 360 / currentOptions.length
+    // 计算选中选项的中心角度（转盘从0度开始，顺时针排列）
+    const optionCenterAngle = randomIndex * anglePerOption + anglePerOption / 2
+    // 指针固定在上方，转盘需要旋转到让选中选项对准指针
+    // 转盘逆时针旋转optionCenterAngle度，让选中选项移动到指针位置
+    const targetAngle = -optionCenterAngle
+    
+    // 计算总旋转角度（基于当前位置多转几圈后停在目标角度）
+    const spins = Math.floor(Math.random() * 5) + 5 // 5-10圈
+    // 获取当前转盘的实际角度位置（去除完整圈数）
+    const currentAngle = wheelRotation % 360
+    // 计算从当前位置到目标位置的最短路径
+    let angleDiff = targetAngle - currentAngle
+    if (angleDiff > 180) angleDiff -= 360
+    if (angleDiff < -180) angleDiff += 360
+    const totalRotation = wheelRotation + spins * 360 + angleDiff
+    
+    setWheelRotation(totalRotation)
+
+    // 添加spinning类
+    const wheel = document.querySelector('.wheel') as HTMLElement
+    if (wheel) {
+      wheel.classList.add('spinning')
+    }
 
     setTimeout(() => {
-      const randomIndex = Math.floor(Math.random() * currentOptions.length)
-      const selectedOption = currentOptions[randomIndex]
       setResult(selectedOption.name)
       setIsSpinning(false)
       
@@ -221,6 +260,11 @@ export default function RandomSelector() {
         timestamp: new Date().toLocaleString('zh-CN')
       }
       setHistory([newHistoryItem, ...history.slice(0, 9)]) // 保留最近10条记录
+      
+      // 移除spinning类
+      if (wheel) {
+        wheel.classList.remove('spinning')
+      }
       
       showMessage(`结果是：${selectedOption.name}`, 'success')
     }, 3000)
@@ -437,6 +481,35 @@ export default function RandomSelector() {
             align-items: center;
           }
           
+          .template-selector {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+          }
+          
+          .template-select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            font-size: 16px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: #495057;
+          }
+          
+          .template-select:focus {
+            outline: none;
+            border-color: #28a745;
+            box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.1);
+          }
+          
+          .template-select option[disabled] {
+            color: #6c757d;
+            font-style: italic;
+          }
+          
           .group-select {
             flex: 1;
             padding: 12px 15px;
@@ -525,6 +598,12 @@ export default function RandomSelector() {
             border-radius: 10px;
             border: 1px solid #e9ecef;
             transition: all 0.3s ease;
+            color: #333;
+          }
+          
+          .option-tag span {
+            color: #333;
+            font-weight: 500;
           }
           
           .option-tag:hover {
@@ -581,12 +660,30 @@ export default function RandomSelector() {
           
           .wheel-pointer {
             position: absolute;
-            top: -10px;
+            top: 50%;
             left: 50%;
-            transform: translateX(-50%);
-            font-size: 24px;
             z-index: 10;
+            font-size: 30px;
+            transform-origin: center;
+            transition: transform 3s cubic-bezier(0.23, 1, 0.32, 1);
           }
+          
+
+          
+          .wheel-pointer {
+            animation: pointerPulse 2s ease-in-out infinite;
+          }
+          
+          @keyframes pointerPulse {
+            0%, 100% {
+              transform: translate(-50%, -50%) rotate(180deg) scale(1);
+            }
+            50% {
+              transform: translate(-50%, -50%) rotate(180deg) scale(1.1);
+            }
+          }
+          
+
           
           .wheel {
             width: 200px;
@@ -601,6 +698,12 @@ export default function RandomSelector() {
             color: #6c757d;
             background: #e9ecef;
           }
+          
+          .wheel {
+            transition: transform 3s cubic-bezier(0.23, 1, 0.32, 1);
+          }
+          
+
           
           .wheel-option-label {
             position: absolute;
@@ -992,6 +1095,30 @@ export default function RandomSelector() {
           }
         `}</style>
 
+          {/* 预设模板选择区域 */}
+          <div className="input-section">
+            <h2>📋 选择预设模板</h2>
+            <div className="template-selector">
+              <select
+                onChange={(e) => {
+                  if (e.target.value) {
+                    loadPresetTemplate(e.target.value)
+                    e.target.value = '' // 重置选择
+                  }
+                }}
+                className="template-select"
+                defaultValue=""
+              >
+                <option value="" disabled>选择一个预设模板...</option>
+                {PRESET_GROUPS.map(template => (
+                  <option key={template.id} value={template.id}>
+                    {template.name} ({template.options.length}个选项)
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
           {/* 选项组管理区域 */}
           <div className="input-section">
             <h2>📁 选项组管理</h2>
@@ -1066,19 +1193,25 @@ export default function RandomSelector() {
           <div className="decision-section">
             <h2>🎲 开始决策</h2>
             <div className="wheel-container">
-              <div className="wheel-pointer">👇</div>
               <div 
-                className="wheel"
+                 className="wheel-pointer"
+                 style={{
+                   transform: 'translate(-50%, -50%) rotate(180deg)'
+                 }}
+               >
+                 👇
+               </div>
+              <div 
+                className={`wheel ${isSpinning ? 'spinning' : ''}`}
                 style={{
-                  transform: `rotate(${rotation}deg)`,
-                  transition: isSpinning ? 'transform 3s cubic-bezier(0.23, 1, 0.32, 1)' : 'none',
                   background: currentOptions.length > 0 ? 
                     `conic-gradient(${currentOptions.map((option, index) => {
                       const startAngle = (index * 360 / currentOptions.length)
                       const endAngle = ((index + 1) * 360 / currentOptions.length)
                       return `${option.color} ${startAngle}deg ${endAngle}deg`
                     }).join(', ')})` : 
-                    'linear-gradient(45deg, #e0e0e0, #f0f0f0)'
+                    'linear-gradient(45deg, #e0e0e0, #f0f0f0)',
+                  transform: `rotate(${wheelRotation}deg)`
                 }}
               >
                 {currentOptions.length > 0 ? (
